@@ -12,7 +12,7 @@ async function bootstrap() {
 
   // Documentación
   const config = new DocumentBuilder()
-    .setTitle('Aluxion Back-end excercise API')
+    .setTitle('Aluxion Back-end Ejercicio API')
     .setDescription('Documentación para Ejercicio Aluxion - Georgette')
     .setVersion('1.0')
     .build();
@@ -20,6 +20,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('docs', app, document);
   // Documentación
+  app.enableCors();
 
   await app.listen(3000);
 }

@@ -1,41 +1,80 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from '../entities/user.entity';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Db } from 'mongodb';
+import * as bcrypt from 'bcrypt';
+
 import { CreateUserDto, UpdateUserDto } from '../dtos/user.dto';
-import { FilesService } from '../../files/services/files.service';
-/* import { ConfigService } from '@nestjs/config'; */
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private filesService: FilesService /* ,private configService: ConfigService, */,
+    @InjectModel(User.name) private UserModel: Model<User>,
+    @Inject('MONGO') private database: Db,
   ) {}
-  private users: User[] = [
-    {
-      id: 1,
-      name: 'Pablo',
-      lastname: 'Rodriguez',
-      userName: 'pabloRod1',
-      password: '13232',
-      email: 'pabloRod1@gmail.com',
-    },
-  ];
 
-  getAll() {
-    /*
-    const api = this.configService.get('NODE_AWS_KEY'); */
-    return this.users;
+  async getAll() {
+    const users = await this.UserModel.find().exec();
+    return {
+      message: 'Users Listed!',
+      data: users,
+    };
   }
 
-  getUser(id: number) {
-    const user = this.users.find((user) => user.id === id);
+  async getUser(id: string) {
+    const user = await this.UserModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
     } else {
-      return user;
+      return {
+        message: 'User Listed!',
+        data: user,
+      };
     }
   }
 
-  getFilesByUser(id: number) {
+  async createUser(payload: CreateUserDto) {
+    const newUser = await new this.UserModel(payload);
+    const hashPassword = await bcrypt.hash(newUser.password, 10);
+    newUser.password = hashPassword;
+    newUser.save();
+    return {
+      message: 'User created!',
+      data: newUser,
+    };
+  }
+
+  findByEmail(email: string) {
+    return this.UserModel.findOne({ where: { email } });
+  }
+
+  async editUser(id: string, payload: UpdateUserDto) {
+    const user = await this.UserModel.findByIdAndUpdate(
+      id,
+      { $set: payload },
+      { new: true },
+    ).exec();
+    if (!user) {
+      throw new NotFoundException(`User #${id} not found`);
+    } else {
+      return {
+        message: 'User updated!',
+        data: user,
+      };
+    }
+  }
+
+  async deleteUser(id: string) {
+    const isDeleted = await this.UserModel.findByIdAndDelete(id);
+    if (!isDeleted) {
+      throw new NotFoundException(`User #${id} not found`);
+    } else {
+      return { message: `User ${id} deleted!` };
+    }
+  }
+
+  /* getFilesByUser(id: number) {
     const user = this.getUser(id);
     return {
       user: user,
@@ -43,32 +82,5 @@ export class UsersService {
     };
   }
 
-  createUser(payload: CreateUserDto) {
-    console.log('payload', payload);
-    const newUser = {
-      id: 34,
-      ...payload,
-    };
-    this.users.push(newUser);
-    return newUser;
-  }
-
-  editUser(id: number, payload: UpdateUserDto) {
-    const user = this.getUser(id);
-    const idx = this.users.findIndex((user) => user.id === id);
-    this.users[idx] = {
-      ...user,
-      ...payload,
-    };
-    return this.users[idx];
-  }
-
-  deleteUser(id: number) {
-    const index = this.users.findIndex((item) => item.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Product #${id} not found`);
-    }
-    this.users.splice(index, 1);
-    return `User ${id} deleted!`;
-  }
+   */
 }

@@ -7,5 +7,10 @@ export default registerAs('config', () => {
       secret: process.env.NODE_AWS_SECRET,
       bucket: process.env.NODE_AWS_BUCKET,
     },
+    mongo: {
+      user: process.env.MONGO_USER,
+      database: process.env.MONGO_DB,
+      password: process.env.MONGO_PASS,
+    },
   };
 });

@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsMongoId } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 export class CreateFileDto {
   @ApiProperty()
@@ -9,22 +9,11 @@ export class CreateFileDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  readonly lastname: string;
+  readonly url: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  readonly userName: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  readonly password: string;
-
-  @ApiProperty()
-  @IsEmail()
-  @IsNotEmpty()
-  readonly email: string;
+  /* @ApiProperty()
+  @IsMongoId()
+  readonly userId: string; */
 }
 
 export class UpdateFileDto extends PartialType(CreateFileDto) {}
