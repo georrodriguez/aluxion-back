@@ -5,6 +5,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { File, FileSchema } from './entities/file.entity';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import config from '../config';
+import { createApi } from 'unsplash-js';
+import * as nodeFetch from 'node-fetch';
+import url from 'node:url';
 
 @Module({
   imports: [
@@ -19,6 +22,17 @@ import config from '../config';
   controllers: [FilesController],
   providers: [
     FilesService,
+    {
+      provide: 'UNSPLASH',
+      useFactory: async (configService: ConfigType<typeof config>) => {
+        const api = await createApi({
+          accessKey: configService.unsplash.key,
+          fetch: nodeFetch,
+        });
+        return api;
+      },
+      inject: [config.KEY],
+    },
     {
       provide: 'CONFIG',
       useFactory: async (configService: ConfigType<typeof config>) => {

@@ -7,6 +7,9 @@ export default registerAs('config', () => {
       secret: process.env.NODE_AWS_SECRET,
       bucket: process.env.NODE_AWS_BUCKET,
     },
+    unsplash: {
+      key: process.env.UNSPLASH_KEY,
+    },
     mongo: {
       user: process.env.MONGO_USER,
       database: process.env.MONGO_DB,

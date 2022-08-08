@@ -3,9 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -24,15 +26,36 @@ export class FilesController {
     return this.filesService.getAll();
   }
 
+  @Get('unsplash/search')
+  getUnsplashImages(
+    @Query('search') search: string,
+    @Query('page') page = 1,
+    @Query('perPage') perPage = 1,
+  ) {
+    const dataInfo = {
+      query: search,
+      page: page,
+      perPage: perPage,
+    };
+    if (!search) {
+      throw new NotFoundException(`You must set query`);
+    }
+    try {
+      return this.filesService.searchByQuery(dataInfo);
+    } catch (error) {
+      throw new NotFoundException(error);
+    }
+  }
+
+  @Post('unsplash/:id')
+  create(@Param('id') id: string) {
+    return this.filesService.downloadById(id);
+  }
+
   @Get(':id')
   getUser(@Param('id', MongoIdPipe) id: string) {
     return this.filesService.getFile(id);
   }
-
-  /* @Post()
-  create(@Body() payload: CreateFileDto) {
-    return this.filesService.createFile(payload);
-  } */
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))

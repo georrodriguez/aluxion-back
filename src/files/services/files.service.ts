@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { S3 } from 'aws-sdk';
@@ -11,6 +16,7 @@ import { CreateFileDto, UpdateFileDto } from '../dtos/files.dto';
 @Injectable()
 export class FilesService {
   constructor(
+    @Inject('UNSPLASH') private apiUnsplash: any,
     @Inject('CONFIG') private configService: ConfigType<typeof config>,
     @InjectModel(File.name) private FileModel: Model<File>,
   ) {}
@@ -23,16 +29,59 @@ export class FilesService {
     };
   }
 
+  async searchByQuery(queryData: any) {
+    const photos = await this.apiUnsplash.search
+      .getPhotos({
+        query: queryData.query ? queryData.query : null,
+        page: queryData.page ? queryData.page : null,
+        perPage: queryData.perPage ? queryData.perPage : null,
+      })
+      .then((result) => {
+        if (result.type !== 'success') {
+          throw new BadRequestException(
+            `Unsplash is failing, please try again`,
+          );
+        }
+      });
+    if (!photos) {
+      throw new NotFoundException(`Not found`);
+    }
+    return {
+      message: 'Images Listed!',
+      data: photos.response,
+    };
+  }
+
+  async downloadById(id: string) {
+    await this.apiUnsplash.search
+      .getPhotos({ photoId: id })
+      .then(async (result) => {
+        if (result.type !== 'success') {
+          throw new BadRequestException(
+            `Unsplash is failing, please try again`,
+          );
+        } else {
+          const photo = result.response;
+          await this.apiUnsplash.photos.trackDownload({
+            downloadLocation: photo.links.download_location,
+          });
+          return {
+            message: 'Image Listed!',
+            data: photo,
+          };
+        }
+      });
+  }
+
   async getFile(id: string) {
     const File = await this.FileModel.findById(id).exec();
     if (!File) {
       throw new NotFoundException(`File #${id} not found`);
-    } else {
-      return {
-        message: 'File Listed!',
-        data: File,
-      };
     }
+    return {
+      message: 'File Listed!',
+      data: File,
+    };
   }
 
   async createFile(payload: CreateFileDto) {
@@ -77,26 +126,6 @@ export class FilesService {
       return { message: `File ${id} deleted!` };
     }
   }
-
-  /* async downloadFile(url: string) {
-    const s3 = this.getS3();
-    const params = {
-      Bucket: bucket,
-      Key: String(name),
-      Body: file,
-    };
-    return new Promise((resolve, reject) => {
-      s3.getObject(params, async (err, data) => {
-        if (err) {
-          reject(err.message);
-        }
-        const url = await this.generatePresignedUrl(data.key);
-        const newFile = { name: data.key, url: url };
-        resolve(newFile);
-        return newFile;
-      });
-    });
-  } */
 
   async upload(file) {
     const { originalname } = file;

@@ -16,6 +16,7 @@ import {
 
 import { UsersService } from '../services/users.service';
 import { CreateUserDto, UpdateUserDto } from '../dtos/user.dto';
+import { ForgotPassword } from '../dtos/forgot-password.dto';
 import { MongoIdPipe } from '../../common/mongo-id.pipe';
 
 @ApiTags('Users')
@@ -54,8 +55,8 @@ export class UsersController {
     return this.usersService.deleteUser(id);
   }
 
-  /* @Get(':id/files')
-  getUserFiles(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.getFilesByUser(id);
-  } */
+  @Post('forgotPassword')
+  forgotPassword(@Body() payload: ForgotPassword) {
+    return this.usersService.forgotPassword(payload);
+  }
 }

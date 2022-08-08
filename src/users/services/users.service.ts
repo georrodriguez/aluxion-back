@@ -5,6 +5,7 @@ import { Db } from 'mongodb';
 import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto, UpdateUserDto } from '../dtos/user.dto';
+import { ForgotPassword } from '../dtos/forgot-password.dto';
 import { User } from '../entities/user.entity';
 
 @Injectable()
@@ -45,8 +46,9 @@ export class UsersService {
     };
   }
 
-  findByEmail(email: string) {
-    return this.UserModel.findOne({ where: { email } });
+  async findByEmail(email: string) {
+    const userEncontrado = await this.UserModel.findOne({ email }).exec();
+    return userEncontrado;
   }
 
   async editUser(id: string, payload: UpdateUserDto) {
@@ -74,13 +76,13 @@ export class UsersService {
     }
   }
 
-  /* getFilesByUser(id: number) {
-    const user = this.getUser(id);
+  async forgotPassword(payload: ForgotPassword) {
+    const user = this.findByEmail(payload.email);
+    if (!user) {
+      throw new NotFoundException(`User not found`);
+    }
     return {
-      user: user,
-      files: this.filesService.getAll(),
+      message: 'This functions is bulding...',
     };
   }
-
-   */
 }
